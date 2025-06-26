@@ -1,0 +1,187 @@
+Here is an **extremely detailed and explicit prompt** designed to guide you through providing all the necessary information for me to generate the `index.html` (web form) and `Code.gs` (Google Apps Script) for your raw material tracking application.
+
+This prompt breaks down every piece of information I need from you into specific, fill-in-the-blank sections. **Please copy this entire prompt and fill in all the bracketed placeholders `[LIKE_THIS]` with your exact details.**
+
+-----
+
+**THE ULTIMATE DETAILED PROMPT FOR RAW MATERIAL FORM GENERATION**
+
+**Introduction:**
+
+I need you to act as an expert web developer and Google Apps Script programmer. Your task is to generate two complete and self-contained code files: `index.html` (for the front-end user interface) and `Code.gs` (for the Google Apps Script backend). These files will create a robust "Raw Material In/Out Form" specifically tailored to my Google Sheet setup.
+
+My goal is to have a fully functional web form that interacts seamlessly with my Google Spreadsheet for data logging and fetching dropdown options.
+
+-----
+
+### **CRUCIAL INSTRUCTION FOR YOU:**
+
+**Please copy this entire prompt, including all headings and subheadings. Then, replace every placeholder enclosed in square brackets `[LIKE_THIS]` with your precise, accurate, and case-sensitive information. Do NOT leave any placeholders unfilled. If a list of options is requested, provide it as a comma-separated list of strings.**
+
+-----
+
+### **Part 1: My Specific Google Sheet Configuration Details**
+
+This section defines how your Google Sheet is structured. **Accuracy here is paramount for the code to work.**
+
+1.  **Main Google Spreadsheet ID:**
+
+      * This is the unique identifier for your primary Google Spreadsheet. You can find it in the Google Sheet's URL, between `/d/` and `/edit`.
+      * *Example:* `1ABCDEfGHIJKLMNOPQRSTUVWXYZ1234567890abcdef`
+      * **MY INPUT:** `[YOUR_MAIN_GOOGLE_SPREADSHEET_ID_HERE]`
+
+2.  **Data Entry Sheet Name:**
+
+      * This is the **exact, case-sensitive name** of the sheet within your Google Spreadsheet where you want the form submissions to be *appended as new rows*.
+      * *Example:* `DailyLogs`
+      * **MY INPUT:** `[YOUR_DATA_ENTRY_SHEET_NAME_HERE]`
+
+3.  **Master Data Sheet Name:**
+
+      * This is the **exact, case-sensitive name** of the sheet within your Google Spreadsheet that holds your master lists for dropdown options (like vendors and raw materials).
+      * *Example:* `ReferenceData`
+      * **MY INPUT:** `[YOUR_MASTER_DATA_SHEET_NAME_HERE]`
+
+4.  **Dropdown Data Column Mappings (from my `[YOUR_MASTER_DATA_SHEET_NAME_HERE]` sheet):**
+
+      * Specify the **column number** (e.g., A=1, B=2, C=3, etc.) where the respective data lists start in your `[YOUR_MASTER_DATA_SHEET_NAME_HERE]` sheet. These lists are assumed to start from **row 2** downwards.
+      * **Vendor Names Column:**
+          * Which column number contains your list of **Vendor Names**?
+          * *Example:* `4` (for Column D)
+          * **MY INPUT:** `[VENDOR_NAMES_COLUMN_NUMBER_IN_MASTER_SHEET_HERE]`
+      * **Raw Materials Column:**
+          * Which column number contains your list of **Raw Materials**?
+          * *Example:* `25` (for Column Y)
+          * **MY INPUT:** `[RAW_MATERIALS_COLUMN_NUMBER_IN_MASTER_SHEET_HERE]`
+
+5.  **Full Ordered List of ALL Column Headers for Data Entry Sheet (`[YOUR_DATA_ENTRY_SHEET_NAME_HERE]`):**
+
+      * **This is the MOST CRITICAL part.** You *must* provide an **ordered JSON array** of strings, where each string is the **exact, case-sensitive name** of a column header in your `[YOUR_DATA_ENTRY_SHEET_NAME_HERE]` sheet.
+      * The order you provide here will be the exact order data is written to your sheet. If your sheet is empty, these headers will be created in this order.
+      * **Include ALL relevant headers**, even if some are populated by fixed form fields, derived values, or are initially left blank by the form but exist in your sheet structure (e.g., "Vendor Address").
+      * *Example Format (copy this structure and fill in your actual headers):*
+        ```json
+        [
+            "Timestamp",
+            "Email Address",
+            "Vendor Name",
+            "Challan Type",
+            "Account Name",
+            "RAW MATERIALs",
+            "Outsource Process",
+            "Item Description",
+            "QTY",
+            "UOM",
+            "Vehicle No.",
+            "Driver's Contact No.",
+            "WOS Ref #",
+            "Work Order Ref. #",
+            "Notes/ Remarks",
+            "Vendor Address",
+            "Vendor Gst",
+            "Contact Details",
+            "Pan no",
+            "Contact Person",
+            "Challan Number",
+            "Another Custom Column",
+            "Final Column Example"
+        ]
+        ```
+      * **MY INPUT (Paste your complete, ordered JSON array here):**
+        ```json
+        [
+            "[HEADER_1_EXACT_NAME]",
+            "[HEADER_2_EXACT_NAME]",
+            // ... CONTINUE THIS LIST WITH ALL YOUR COLUMN HEADERS IN ORDER ...
+            "[LAST_HEADER_EXACT_NAME]"
+        ]
+        ```
+
+-----
+
+### **Part 2: Fixed Dropdown Options (for `index.html`'s hardcoded dropdowns)**
+
+These are the options for dropdowns that do *not* fetch data from the Google Sheet, but are hardcoded directly into the HTML/JavaScript.
+
+1.  **Challan Type Options:**
+
+      * *Provide as a comma-separated string:*
+      * *Example:* `"Job Work, Repairing Work, Sale, Inter Unit Transfer, Other:"`
+      * **MY INPUT:** `[CHALLAN_TYPE_OPTIONS_COMMA_SEPARATED_STRING_HERE]`
+
+2.  **Account Name Options:**
+
+      * *Provide as a comma-separated string:*
+      * *Example:* `"P.P. BAFNA VENTURES PVT. LTD., CRAFT TRENDS LLP, P.P. BAFNA VENTURES PVT. LTD. - RUBBER DIV., P.P. BAFNA VENTURES PVT. LTD. - PENCIL DIV, Other"`
+      * **MY INPUT:** `[ACCOUNT_NAME_OPTIONS_COMMA_SEPARATED_STRING_HERE]`
+
+3.  **Outsource Process Options:**
+
+      * *Provide as a comma-separated string:*
+      * *Example:* `"Printing, Foiling, Velvet Flocking, Spot UV, Glitter, Screen Printing, Lamination / UV / Varnish, Die Punching, Complete Conversion, Other:"`
+      * **MY INPUT:** `[OUTSOURCE_PROCESS_OPTIONS_COMMA_SEPARATED_STRING_HERE]`
+
+4.  **UOM (Unit of Measure) Options (for each raw material item):**
+
+      * *Provide as a comma-separated string:*
+      * *Example:* `"KG, SHEETS, NOs., Other:"`
+      * **MY INPUT:** `[UOM_OPTIONS_COMMA_SEPARATED_STRING_HERE]`
+
+-----
+
+### **Part 3: Generated Code Requirements (AI's Task)**
+
+Based on **ALL** the detailed inputs provided in Part 1 and Part 2, generate the following:
+
+1.  **`index.html` File (Complete HTML, CSS, and JavaScript):**
+
+      * Use Tailwind CSS for responsive and modern styling.
+      * Include a header (`h1`) for "Raw Material In/Out Details".
+      * Implement the main form with `id="materialForm"`.
+      * **General Details Section**:
+          * `Timestamp` field (read-only, auto-populated client-side).
+          * `Email Address` input.
+          * `Vendor Name`: Implement a **searchable dropdown** dynamically populated using `fetch` from `Code.gs` (`getVendorNames` action). The selected value should be stored in a hidden input.
+          * `Challan Type`: Standard `<select>` with options from `[CHALLAN_TYPE_OPTIONS_COMMA_SEPARATED_STRING_HERE]`. If "Other:" is selected, a new text input field must appear below it.
+          * `Account Name`: Standard `<select>` with options from `[ACCOUNT_NAME_OPTIONS_COMMA_SEPARATED_STRING_HERE]`.
+      * **Raw Material Details Section**:
+          * An `Add Raw Material` button (`id="addMaterialBtn"`) that dynamically adds new item rows.
+          * Each dynamically added raw material row (`class="raw-material-item"`) must contain:
+              * `RAW MATERIALs`: A **searchable dropdown** dynamically populated using `fetch` from `Code.gs` (`getRawMaterials` action). The selected value should be stored in a hidden input.
+              * `Item Description`: A standard text input with a clear, visible label.
+              * `QTY`: A number input.
+              * `UOM`: A standard `<select>` with options from `[UOM_OPTIONS_COMMA_SEPARATED_STRING_HERE]`. If "Other:" is selected, a new text input field must appear below it *for that specific item's row*.
+              * A `Remove` button for the row (prevents removing the last remaining row).
+      * **Other Details Section**:
+          * `Outsource Process`: Standard `<select>` with options from `[OUTSOURCE_PROCESS_OPTIONS_COMMA_SEPARATED_STRING_HERE]`. If "Other:" is selected, a new text input field must appear below it.
+          * `Vehicle No.`, `Driver's Contact No.`, `WOS Ref #`, `Work Order Ref. #`, `Notes/ Remarks` (textarea).
+      * **Submission Button**: A `Submit Entry` button (`id="submitBtn"`) that shows a loading spinner during submission.
+      * **Modal Dialog**: A hidden modal (`id="messageModal"`) that displays submission success/failure messages and, if successful, the JSON payload sent.
+      * **JavaScript (within `<script>` tags in `index.html`):**
+          * All `APPS_SCRIPT_URL` and `SPREADSHEET_ID` should be `const APPS_SCRIPT_URL = 'YOUR_DEPLOYED_WEB_APP_URL_HERE';` and `const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';` respectively.
+          * Correctly capture all form field values, including the 'Other:' custom inputs for `Challan Type`, `Outsource Process`, and `UOM` in each raw material item.
+          * Construct the `unifiedPayload` JSON object for submission: it should have all main form fields as top-level keys, and a key `items` containing an array of objects, where each object represents a raw material row with its specific fields. The keys in the payload for submission *must* match the headers in `SHEET_HEADERS_ORDER`.
+          * Handle `no-cors` for the `fetch` request to Google Apps Script.
+          * Implement robust error handling and user feedback.
+
+2.  **`Code.gs` File (Google Apps Script):**
+
+      * Define `const NEW_SPREADSHEET_ID = "[YOUR_MAIN_GOOGLE_SPREADSHEET_ID_HERE]";`
+      * Define `const DATA_ENTRY_SHEET_NAME = "[YOUR_DATA_ENTRY_SHEET_NAME_HERE]";`
+      * Define `const MASTER_SHEET_NAME = "[YOUR_MASTER_DATA_SHEET_NAME_HERE]";`
+      * Define `const SHEET_HEADERS_ORDER` with the **exact JSON array structure you provided in Part 1, point 5**.
+      * Implement `doGet(e)`:
+          * Handle `action=getVendorNames`: Get data from `[YOUR_MASTER_DATA_SHEET_NAME_HERE]` at **Column `[VENDOR_NAMES_COLUMN_NUMBER_IN_MASTER_SHEET_HERE]`**, starting from row 2.
+          * Handle `action=getRawMaterials`: Get data from `[YOUR_MASTER_DATA_SHEET_NAME_HERE]` at **Column `[RAW_MATERIALS_COLUMN_NUMBER_IN_MASTER_SHEET_HERE]`**, starting from row 2.
+          * Return data as `{ success: true, vendors: [...] }` or `{ success: true, materials: [...] }`.
+      * Implement `doPost(e)`:
+          * Parse the `e.postData.contents` as a JSON object, expecting the `unifiedPayload` structure from `index.html`.
+          * Iterate through the `items` array within the payload. For each item, create a new row.
+          * Merge common form fields (from the main payload) with item-specific fields to form a complete row.
+          * **Crucially:** Ensure data mapping to columns in the Google Sheet is done using the `SHEET_HEADERS_ORDER` array.
+          * Implement logic to **automatically create the `SHEET_HEADERS_ORDER` headers** in the `[YOUR_DATA_ENTRY_SHEET_NAME_HERE]` if it is empty (has no data in row 1).
+          * Handle `Timestamp` conversion from ISO string to Date object in `appendToGoogleSheet`.
+      * Include necessary helper functions: `getSheet`, `appendToGoogleSheet`.
+      * Include test functions for Apps Script editor: `testDoPost`, `testDoGetVendorNames`, `testDoGetRawMaterials`, `debugSheetStructure`, `cleanupTestData`.
+
+-----
