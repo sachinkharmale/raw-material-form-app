@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Material In/Out Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .readonly-input {
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
+            color: #374151;
+            cursor: not-allowed;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 700px; /* Increased max-width for JSON */
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+        .modal-content pre {
+            background-color: #e5e7eb;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: left;
+            overflow-x: auto;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+        .modal-close-btn {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-close-btn:hover,
+        .modal-close-btn:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Styles for custom searchable dropdown */
+        .custom-select-container {
+            position: relative;
+            width: 100%;
+        }
+        .custom-select-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .custom-select-input:focus {
+            border-color: #3b82f6; /* focus:border-blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* focus:ring-blue-500 */
+            outline: none;
+        }
+        .custom-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            max-height: 200px;
+            overflow-y: auto;
+            display: none; /* Hidden by default */
+        }
+        .custom-select-dropdown.active {
+            display: block; /* Show when active */
+        }
+        .custom-select-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 0.15s ease-in-out;
+        }
+        .custom-select-option:hover {
+            background-color: #f3f4f6; /* hover:bg-gray-100 */
+        }
+        .custom-select-option.selected {
+            background-color: #e0f2fe; /* light blue for selected */
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-6 lg:p-8">
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">×</span>
+            <p id="modalMessage" class="text-lg text-gray-800 mb-4"></p>
+            <div id="modalJsonDisplay" class="mt-4 hidden">
+                <h3 class="font-semibold text-gray-700 text-base mb-2">JSON Payload Sent:</h3>
+                <pre id="jsonPayloadPre" class="whitespace-pre-wrap"></pre>
+            </div>
+            <button type="button" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 mt-4" onclick="document.getElementById('messageModal').style.display='none'">Okay</button>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Raw Material In/Out Details</h1>
+        <form id="materialForm" class="space-y-8">
+            <!-- General Details Section -->
+            <fieldset class="border-t-2 border-blue-500 pt-4 rounded-xl">
+                <legend class="text-xl font-semibold text-gray-700 px-2">General Details</legend>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    <div>
+                        <label for="timestamp" class="block text-sm font-medium text-gray-600">Timestamp</label>
+                        <input type="text" id="timestamp" name="Timestamp" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm readonly-input" readonly>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-600">Email Address</label>
+                        <input type="email" id="email" name="email" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="vendorName" class="block text-sm font-medium text-gray-600">Vendor Name</label>
+                        <!-- Custom searchable dropdown for Vendor Name -->
+                        <div class="custom-select-container">
+                            <input type="text" id="vendorNameInput" class="mt-1 custom-select-input" placeholder="Select Vendor" autocomplete="off">
+                            <input type="hidden" id="vendorName" name="vendorName">
+                            <div class="custom-select-dropdown" id="vendorNameDropdown"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="challanType" class="block text-sm font-medium text-gray-600">Challan Type</label>
+                        <select id="challanType" name="challanType" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Type</option>
+                            <option value="Job Work">Job Work</option>
+                            <option value="Repairing Work">Repairing Work</option>
+                            <option value="Sale">Sale</option>
+                            <option value="Inter Unit Transfer">Inter Unit Transfer</option>
+                            <option value="Other">Other:</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="accountName" class="block text-sm font-medium text-gray-600">Account Name</label>
+                        <select id="accountName" name="accountName" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Account</option>
+                            <option value="P.P. BAFNA VENTURES PVT. LTD.">P.P. BAFNA VENTURES PVT. LTD.</option>
+                            <option value="CRAFT TRENDS LLP">CRAFT TRENDS LLP</option>
+                            <option value="P.P. BAFNA VENTURES PVT. LTD. - RUBBER DIV.">P.P. BAFNA VENTURES PVT. LTD. - RUBBER DIV.</option>
+                            <option value="P.P. BAFNA VENTURES PVT. LTD. - PENCIL DIV">P.P. BAFNA VENTURES PVT. LTD. - PENCIL DIV</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Raw Materials Section -->
+            <fieldset class="border-t pt-4 rounded-xl">
+                <legend class="text-xl font-semibold text-gray-700 px-2">Raw Material Details</legend>
+                <div id="raw-material-list" class="space-y-4 mt-4">
+                    <!-- Raw material items will be added here by JavaScript -->
+                </div>
+                <button type="button" id="addMaterialBtn" class="mt-4 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                    Add Raw Material
+                </button>
+            </fieldset>
+
+            <!-- Other Details Section -->
+            <fieldset class="border-t pt-4 rounded-xl">
+                <legend class="text-xl font-semibold text-gray-700 px-2">Other Details</legend>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    <div class="md:col-span-2">
+                        <label for="outsourceProcess" class="block text-sm font-medium text-gray-600">Outsource Process</label>
+                        <select id="outsourceProcess" name="outsourceProcess" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Process</option>
+                            <option value="Printing">Printing</option>
+                            <option value="Foiling">Foiling</option>
+                            <option value="Velvet Flocking">Velvet Flocking</option>
+                            <option value="Spot UV">Spot UV</option>
+                            <option value="Glitter">Glitter</option>
+                            <option value="Screen Printing">Screen Printing</option>
+                            <option value="Lamination / UV / Varnish">Lamination / UV / Varnish</option>
+                            <option value="Die Punching">Die Punching</option>
+                            <option value="Complete Conversion">Complete Conversion</option>
+                            <option value="Other:">Other:</option>
+                        </select>
+                        <input type="text" id="outsourceProcessOtherInput" name="outsourceProcessOther" placeholder="Specify Other Process" class="mt-2 hidden block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="vehicleNo" class="block text-sm font-medium text-gray-600">Vehicle No.</label>
+                        <input type="text" id="vehicleNo" name="vehicleNo" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="driverContact" class="block text-sm font-medium text-gray-600">Driver's Contact No.</label>
+                        <input type="tel" id="driverContact" name="driverContact" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="wosRef" class="block text-sm font-medium text-gray-600">WOS Ref #</label>
+                        <input type="text" id="wosRef" name="wosRef" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="workOrderRef" class="block text-sm font-medium text-gray-600">Work Order Ref. #</label>
+                        <input type="text" id="workOrderRef" name="workOrderRef" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="notes" class="block text-sm font-medium text-gray-600">Notes/ Remarks</label>
+                        <div class="flex items-center gap-2">
+                            <textarea id="notes" name="notes" rows="4" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            <!-- Removed Summarize Notes button -->
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Submit Button -->
+            <div class="text-center pt-6 border-t flex flex-col sm:flex-row justify-center gap-4">
+                <button type="submit" id="submitBtn" class="w-full md:w-auto px-12 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all duration-300 flex items-center justify-center gap-2">
+                    <span id="buttonText">Submit Entry</span>
+                    <div id="loadingSpinner" class="spinner hidden"></div>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Google Apps Script URL for communication
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1hqjtIMO6OLt7SyabLB-aXdHJQrUc7ox-fDuGYzs1himvD84h1s75cZc-GclMBI3Pzw/exec';
+        
+        // SPREADSHEET_ID for the Raw Material form's target sheet.
+        const SPREADSHEET_ID = '1elkg5vbdzyaV09SejZW0PAWV_mfcFsJrqCrm76bl_mQ';
+        const TARGET_SHEET_NAME = '1234'; // Sheet for form entries
+
+        let vendorNames = [];
+        let rawMaterialNames = [];
+        const UOM_OPTIONS = ["KG", "SHEETS", "NOs.", "Other:"];
+
+        // --- Custom Message Modal Function ---
+        function showMessageModal(message, jsonPayload = null) {
+            document.getElementById('modalMessage').textContent = message;
+            const jsonDisplayDiv = document.getElementById('modalJsonDisplay');
+            const jsonPayloadPre = document.getElementById('jsonPayloadPre');
+
+            if (jsonPayload) {
+                jsonPayloadPre.textContent = JSON.stringify(jsonPayload, null, 2);
+                jsonDisplayDiv.classList.remove('hidden');
+            } else {
+                jsonPayloadPre.textContent = '';
+                jsonDisplayDiv.classList.add('hidden');
+            }
+            document.getElementById('messageModal').style.display = 'flex';
+        }
+
+        // --- Fetch Dropdown Data from Apps Script ---
+        async function fetchDropdownData(action) {
+            const url = `${APPS_SCRIPT_URL}?action=${action}`;
+            try {
+                const response = await fetch(url, { method: 'GET', mode: 'cors' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.success) {
+                    return action === 'getVendorNames' ? result.vendors : result.materials;
+                } else {
+                    console.error(`Error fetching ${action}:`, result.error);
+                    showMessageModal(`Failed to load ${action.replace('get', '').toLowerCase()} data. Using default input.`);
+                    return [];
+                }
+            } catch (error) {
+                console.error(`Error fetching ${action}:`, error);
+                showMessageModal(`Failed to load ${action.replace('get', '').toLowerCase()} data. Please check network or script. Using default input.`);
+                return [];
+            }
+        }
+
+        // --- Custom Searchable Dropdown Logic ---
+        function setupSearchableDropdown(inputElement, hiddenInputElement, dropdownElement, optionsData) {
+            let currentSelectedValue = '';
+
+            const filterAndDisplayOptions = () => {
+                dropdownElement.innerHTML = '';
+                const searchTerm = inputElement.value.toLowerCase();
+                const filteredOptions = optionsData.filter(option => 
+                    option.toLowerCase().includes(searchTerm)
+                );
+
+                if (filteredOptions.length > 0) {
+                    filteredOptions.forEach(optionText => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.classList.add('custom-select-option', 'text-sm', 'text-gray-700');
+                        optionDiv.textContent = optionText;
+                        if (optionText === currentSelectedValue) {
+                            optionDiv.classList.add('selected');
+                        }
+                        optionDiv.addEventListener('click', () => {
+                            inputElement.value = optionText;
+                            hiddenInputElement.value = optionText;
+                            currentSelectedValue = optionText;
+                            dropdownElement.classList.remove('active');
+                        });
+                        dropdownElement.appendChild(optionDiv);
+                    });
+                    dropdownElement.classList.add('active');
+                } else {
+                    dropdownElement.classList.remove('active');
+                }
+            };
+
+            inputElement.addEventListener('input', filterAndDisplayOptions);
+            inputElement.addEventListener('focus', filterAndDisplayOptions);
+
+            document.addEventListener('click', (event) => {
+                if (!inputElement.parentElement.contains(event.target)) {
+                    dropdownElement.classList.remove('active');
+                }
+            });
+
+            inputElement.addEventListener('blur', () => {
+                if (!optionsData.includes(inputElement.value) && inputElement.value !== '') {
+                    if (optionsData.includes("Other:") && inputElement.value.toLowerCase().startsWith('other:')) {
+                        hiddenInputElement.value = inputElement.value;
+                    } else {
+                        inputElement.value = currentSelectedValue;
+                        hiddenInputElement.value = currentSelectedValue;
+                    }
+                } else {
+                    currentSelectedValue = inputElement.value;
+                    hiddenInputElement.value = inputElement.value;
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            // --- DOM Elements ---
+            const materialForm = document.getElementById('materialForm');
+            const addMaterialBtn = document.getElementById('addMaterialBtn');
+            const rawMaterialList = document.getElementById('raw-material-list');
+            const submitBtn = document.getElementById('submitBtn');
+            const buttonText = document.getElementById('buttonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const outsourceProcessSelect = document.getElementById('outsourceProcess');
+            const outsourceProcessOtherInput = document.getElementById('outsourceProcessOtherInput');
+            const notesTextarea = document.getElementById('notes');
+            
+
+            // --- Modal Close Button ---
+            document.querySelector('#messageModal .modal-close-btn').addEventListener('click', function() {
+                document.getElementById('messageModal').style.display = 'none';
+            });
+
+            // --- Initial Setup ---
+            setTimestamp();
+            await loadInitialData(); // Load dropdown data first for searchable fields
+            addRawMaterialItem(false); // Add a blank raw material item
+
+            // --- Event Listeners ---
+            addMaterialBtn.addEventListener('click', addRawMaterialItem); 
+            rawMaterialList.addEventListener('click', handleRawMaterialListClick);
+            materialForm.addEventListener('submit', handleFormSubmit);
+
+            // Listener for Outsource Process "Other:" option
+            outsourceProcessSelect.addEventListener('change', function() {
+                if (this.value === 'Other:') {
+                    outsourceProcessOtherInput.classList.remove('hidden');
+                    outsourceProcessOtherInput.setAttribute('required', 'true'); // Make required if "Other" is selected
+                } else {
+                    outsourceProcessOtherInput.classList.add('hidden');
+                    outsourceProcessOtherInput.removeAttribute('required');
+                    outsourceProcessOtherInput.value = ''; // Clear input if not "Other"
+                }
+            });
+
+            // --- Functions ---
+            function setTimestamp() {
+                document.getElementById('timestamp').value = new Date().toLocaleString();
+            }
+
+            async function loadInitialData() {
+                // Fetch vendor names and set up searchable dropdown
+                vendorNames = await fetchDropdownData('getVendorNames');
+                setupSearchableDropdown(
+                    document.getElementById('vendorNameInput'),
+                    document.getElementById('vendorName'),
+                    document.getElementById('vendorNameDropdown'),
+                    vendorNames
+                );
+
+                // Fetch raw material names (used for dynamically added items)
+                rawMaterialNames = await fetchDropdownData('getRawMaterials');
+            }
+
+            // Function to add a new raw material item row
+            function addRawMaterialItem(isPrefilled = false) {
+                const itemId = `raw-material-item-${Date.now()}`;
+                
+                const prefillMaterialName = "";
+                const prefillDescription = "";
+                const prefillQty = "1";
+                const prefillUOM = "";
+
+                const itemHtml = `
+                    <div id="${itemId}" class="raw-material-item p-4 border border-gray-200 rounded-lg bg-gray-50 grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-2 items-start relative shadow-sm">
+                        <!-- RAW MATERIALs -->
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-medium text-gray-500">RAW MATERIALs</label>
+                            <div class="custom-select-container">
+                                <input type="text" class="mt-1 custom-select-input raw-material-name-input" placeholder="Select Raw Material" autocomplete="off">
+                                <input type="hidden" name="rawMaterial" value="${prefillMaterialName}">
+                                <div class="custom-select-dropdown raw-material-name-dropdown"></div>
+                            </div>
+                        </div>
+                        <!-- Item Description -->
+                        <div class="md:col-span-4">
+                            <label for="itemDescription-${itemId}" class="block text-xs font-medium text-gray-500">Item Description</label>
+                            <input type="text" id="itemDescription-${itemId}" name="itemDescription" value="${prefillDescription}" class="mt-1 block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 item-description-input">
+                        </div>
+                        <!-- QTY -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500">QTY</label>
+                            <input type="number" name="qty" value="${prefillQty}" min="0" required class="mt-1 block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <!-- UOM -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500">UOM</label>
+                            <select name="uom" class="mt-1 block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 uom-select">
+                                <option value="">Select UOM</option>
+                                ${UOM_OPTIONS.map(option => `<option value="${option}" ${prefillUOM === option ? 'selected' : ''}>${option}</option>`).join('')}
+                            </select>
+                            <input type="text" name="uomOther" placeholder="Specify Other UOM" class="mt-2 hidden block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 uom-other-input">
+                        </div>
+                        <!-- Remove Button -->
+                        <button type="button" class="remove-material-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-sm shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            ×
+                        </button>
+                    </div>
+                `;
+                rawMaterialList.insertAdjacentHTML('beforeend', itemHtml);
+
+                // After adding the HTML, get the new elements and set up the searchable dropdown
+                const newItem = document.getElementById(itemId);
+                const rawMaterialInput = newItem.querySelector('.raw-material-name-input');
+                const rawMaterialHidden = newItem.querySelector('input[name="rawMaterial"]');
+                const rawMaterialDropdown = newItem.querySelector('.raw-material-name-dropdown');
+                setupSearchableDropdown(rawMaterialInput, rawMaterialHidden, rawMaterialDropdown, rawMaterialNames);
+
+                // Add event listener for the new UOM select
+                const uomSelect = newItem.querySelector('.uom-select');
+                const uomOtherInput = newItem.querySelector('.uom-other-input');
+                uomSelect.addEventListener('change', function() {
+                    if (this.value === 'Other:') {
+                        uomOtherInput.classList.remove('hidden');
+                        uomOtherInput.setAttribute('required', 'true');
+                    } else {
+                        uomOtherInput.classList.add('hidden');
+                        uomOtherInput.removeAttribute('required');
+                        uomOtherInput.value = '';
+                    }
+                });
+            }
+
+            function handleRawMaterialListClick(e) {
+                if (e.target.classList.contains('remove-material-btn')) {
+                    if (rawMaterialList.children.length > 1) {
+                        e.target.closest('.raw-material-item').remove();
+                    } else {
+                        showMessageModal("You cannot remove the only raw material item.");
+                    }
+                }
+            }
+
+            async function handleFormSubmit(e) {
+                e.preventDefault();
+
+                submitBtn.disabled = true;
+                buttonText.textContent = 'Submitting...';
+                loadingSpinner.classList.remove('hidden');
+                
+                const submissionDateTime = new Date(); // Get current Date object
+                document.getElementById('timestamp').value = new Date().toLocaleString(); // Display local string
+
+                const formData = new FormData(materialForm);
+                
+                // Determine the Outsource Process value
+                let outsourceProcessValue = outsourceProcessSelect.value;
+                if (outsourceProcessValue === 'Other:') {
+                    outsourceProcessValue = outsourceProcessOtherInput.value.trim(); // Get value from the custom input
+                }
+                
+                // Collect general form fields into a primary payload object
+                // Ensure keys match expected Apps Script headers for these fields
+                const mainPayload = {
+                    "Timestamp": submissionDateTime.toISOString(), // Send ISO string for full detail
+                    "Email Address": formData.get('email'),
+                    "Vendor Name": document.getElementById('vendorName').value, // Get from hidden input
+                    "Challan Type": formData.get('challanType'),
+                    "Account Name": formData.get('accountName'),
+                    "Outsource Process": outsourceProcessValue, // Use the determined value
+                    "Vehicle No.": formData.get('vehicleNo'),
+                    "Driver's Contact No.": formData.get('driverContact'),
+                    "WOS Ref #": formData.get('wosRef'), 
+                    "Work Order Ref. #": formData.get('workOrderRef'), 
+                    "Notes/ Remarks": notesTextarea.value, // Get value from the notes textarea
+                    // These fields are always blank in the form, but are included in the payload
+                    // to match the Apps Script's expected columns
+                    "Vendor Address": "", 
+                    "Vendor Gst": "",   
+                    "Contact Details": "", 
+                    "Pan no": "",      
+                    "Contact Person": "",
+                    "Challan Number": "" 
+                };
+
+                // Collect dynamic raw material items into an array
+                const rawMaterialItems = [];
+                const rawMaterialElements = rawMaterialList.querySelectorAll('.raw-material-item');
+                
+                if (rawMaterialElements.length === 0) {
+                    showMessageModal("Please add at least one raw material item.");
+                    submitBtn.disabled = false;
+                    buttonText.textContent = 'Submit Entry';
+                    loadingSpinner.classList.add('hidden');
+                    return;
+                }
+
+                rawMaterialElements.forEach(item => {
+                    const uomSelect = item.querySelector('.uom-select');
+                    const uomOtherInput = item.querySelector('.uom-other-input');
+                    let uomValue = uomSelect.value;
+                    if (uomValue === 'Other:') {
+                        uomValue = uomOtherInput.value.trim(); // Get value from the custom input
+                    }
+
+                    // Raw material item specific fields
+                    const materialData = {
+                        "RAW MATERIALs": item.querySelector('input[name="rawMaterial"]').value, // Get from hidden input
+                        "Item Description": item.querySelector('.item-description-input').value, // Get value from the item description input
+                        "QTY": parseFloat(item.querySelector('[name="qty"]').value) || 0,
+                        "UOM": uomValue // Use the determined UOM value
+                    };
+                    rawMaterialItems.push(materialData);
+                });
+
+                // The unified payload that will be sent to Apps Script's doPost.
+                // This structure directly reflects the form data.
+                const unifiedPayload = {
+                    ...mainPayload, // Includes all main form fields
+                    items: rawMaterialItems // Includes the array of raw material items
+                };
+
+                console.log('Submitting data:', unifiedPayload); // Log the unified payload
+
+                try {
+                    // Send the unified JSON object directly as the request body
+                    const response = await fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // Keep no-cors for Google Apps Script
+                        headers: {
+                            'Content-Type': 'application/json', // IMPORTANT: Send as application/json
+                        },
+                        body: JSON.stringify(unifiedPayload), // Send the JSON string directly
+                    });
+
+                    // Due to 'no-cors' mode, we can't inspect response.ok or response.json() directly.
+                    // We just assume success if the fetch operation itself doesn't throw a network error.
+                    showMessageModal(`Raw Material Entry submitted successfully! Please check your Google Sheet.`, unifiedPayload);
+                    
+                    // Reset form after successful submission
+                    materialForm.reset();
+                    setTimestamp(); // Set new timestamp
+                    rawMaterialList.innerHTML = ''; // Clear previous items
+                    addRawMaterialItem(false); // Add a fresh blank item
+                    outsourceProcessOtherInput.classList.add('hidden'); // Hide "Other" input on reset
+                    outsourceProcessOtherInput.removeAttribute('required'); // Remove required attribute
+                    outsourceProcessOtherInput.value = ''; // Clear "Other" input on reset
+                } catch (error) {
+                    console.error('Error submitting form:', error);
+                    showMessageModal("Failed to submit Raw Material Entry. Please try again. Check console for details.", unifiedPayload);
+                } finally {
+                    submitBtn.disabled = false;
+                    buttonText.textContent = 'Submit Entry';
+                    loadingSpinner.classList.add('hidden');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
